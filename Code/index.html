@@ -313,7 +313,7 @@
     max-width: 46ch;
   }
   #canvasRamo{
-    width:100%; max-width: 560px; aspect-ratio: 2 / 3;
+    width:100%; max-width: 760px; aspect-ratio: 3 / 4;
     background: radial-gradient(circle at 50% 30%, rgba(255,250,235,.9), rgba(255,240,205,.55));
     border-radius: 18px;
     box-shadow: 0 28px 60px rgba(150,95,15,.25), inset 0 0 0 1px rgba(230,180,90,.4);
@@ -641,11 +641,11 @@
       <p class="p3-title">Tu ramo de flores amarillas</p>
       <p class="p3-sub">Armado especialmente para ti, pétalo a pétalo</p>
 
-      <canvas id="canvasRamo" width="800" height="1200" aria-label="Ramo animado de flores amarillas"></canvas>
+      <canvas id="canvasRamo" width="1200" height="1600" aria-label="Ramo animado de flores amarillas"></canvas>
 
       <div class="p3-buttons">
         <button class="btn-secondary" id="btnReplay">↻ Repetir animación</button>
-        <button class="btn-secondary" id="btnDownloadPng">⬇ Descargar Ramo como Imagen (PNG)</button>
+        <button class="btn-secondary" id="btnDownloadPng">⬇ Descargar Sección Completa (PNG)</button>
         <button class="btn-secondary" id="btnDownloadVideo">● Descargar Animación como Video (WebM)</button>
       </div>
       <p class="rec-status" id="recStatus"></p>
@@ -776,11 +776,11 @@
   // scale: tamaño relativo de la flor
   // delay: retraso (en "unidades de animación") antes de que esta flor empiece a crecer
   const FLOWER_CONFIG = [
-    { angle: -34, length: 0.62, scale: 0.85, delay: 0.00, stem: 'curvo' },
-    { angle: -16, length: 0.68, scale: 0.95, delay: 0.10, stem: 'curvo' },
-    { angle:   0, length: 0.72, scale: 1.35, delay: 0.20, stem: 'central' },
-    { angle:  16, length: 0.68, scale: 0.95, delay: 0.10, stem: 'curvo' },
-    { angle:  34, length: 0.62, scale: 0.85, delay: 0.00, stem: 'curvo' },
+    { angle: -30, length: 0.50, scale: 0.85, delay: 0.00, stem: 'curvo' },
+    { angle: -14, length: 0.58, scale: 0.95, delay: 0.10, stem: 'curvo' },
+    { angle:   0, length: 0.64, scale: 1.35, delay: 0.20, stem: 'central' },
+    { angle:  14, length: 0.58, scale: 0.95, delay: 0.10, stem: 'curvo' },
+    { angle:  30, length: 0.50, scale: 0.85, delay: 0.00, stem: 'curvo' },
   ];
 
   const BASE_X_RATIO = 0.5;   // posición horizontal del punto donde nacen los tallos
@@ -800,6 +800,7 @@
   function loadImage(key, src){
     return new Promise((resolve) => {
       const img = new Image();
+      if(location.protocol !== 'file:') img.crossOrigin = 'anonymous';
       img.onload = () => { images[key] = img; imagesOk[key] = true; resolve(); };
       img.onerror = () => { imagesOk[key] = false; resolve(); }; // fallback silencioso
       img.src = src;
@@ -1077,19 +1078,42 @@
     try{
       btnPng.disabled = true;
       recStatus.textContent = 'Preparando la imagen del ramo…';
+      if(location.protocol === 'file:'){
+        throw new Error('La descarga requiere abrir la página desde http://localhost, no desde file://');
+      }
       await imagesReady;
 
       const scaleFactor = 2;
+      const headerHeight = 220;
+      const footerHeight = 180;
       const hiRes = document.createElement('canvas');
       hiRes.width = canvas.width * scaleFactor;
-      hiRes.height = canvas.height * scaleFactor;
+      hiRes.height = (headerHeight + canvas.height + footerHeight) * scaleFactor;
       const hiCtx = hiRes.getContext('2d');
       hiCtx.scale(scaleFactor, scaleFactor);
+
+      hiCtx.fillStyle = '#111014';
+      hiCtx.fillRect(0, 0, canvas.width, headerHeight + canvas.height + footerHeight);
+      hiCtx.textAlign = 'center';
+      hiCtx.fillStyle = '#f8d36a';
+      hiCtx.font = '52px "IM Fell English SC", Georgia, serif';
+      hiCtx.fillText('Tu ramo de flores amarillas', canvas.width / 2, 78);
+      hiCtx.fillStyle = '#b7a987';
+      hiCtx.font = '25px "Special Elite", "Courier New", monospace';
+      hiCtx.fillText('Armado especialmente para ti, pétalo a pétalo', canvas.width / 2, 132);
 
       const mainCtx = ctx;
       ctx = hiCtx;
       try{
+        ctx.translate(0, headerHeight);
         drawScene(1);
+        ctx.translate(0, -headerHeight);
+        ctx.fillStyle = '#f8d36a';
+        ctx.font = '24px "Caveat", cursive';
+        ctx.fillText('Feliz Día de las Flores Amarillas', canvas.width / 2, headerHeight + canvas.height + 72);
+        ctx.fillStyle = '#b7a987';
+        ctx.font = '18px "Special Elite", "Courier New", monospace';
+        ctx.fillText('Que cada pétalo te recuerde lo mucho que significas para mí.', canvas.width / 2, headerHeight + canvas.height + 112);
       } finally {
         ctx = mainCtx;
       }
@@ -1099,7 +1123,7 @@
       });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.download = 'ramo-flores-amarillas.png';
+      link.download = 'seccion-ramo-flores-amarillas.png';
       link.href = url;
       link.style.display = 'none';
       document.body.appendChild(link);
@@ -1108,7 +1132,9 @@
       setTimeout(() => URL.revokeObjectURL(url), 4000);
       recStatus.textContent = '¡Imagen descargada con éxito!';
     } catch(error){
-      recStatus.textContent = 'No se pudo descargar la imagen. Intenta nuevamente.';
+      recStatus.textContent = location.protocol === 'file:'
+        ? 'Abre la página desde http://localhost para habilitar la descarga.'
+        : 'No se pudo descargar la imagen. Intenta nuevamente.';
       console.error('Error al descargar el ramo como PNG:', error);
     } finally {
       btnPng.disabled = false;
