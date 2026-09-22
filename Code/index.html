@@ -524,6 +524,14 @@
 </head>
 <body>
 
+<audio
+  id="backgroundMusic"
+  src="./Aerosmith%20-%20I%20Don%27t%20Want%20to%20Miss%20a%20Thing%20(Audio).mp3"
+  autoplay
+  loop
+  preload="auto">
+</audio>
+
 <div id="app">
   <div class="ambient-glow glow-a"></div>
   <div class="ambient-glow glow-b"></div>
@@ -658,6 +666,21 @@
 <script>
 (function(){
   "use strict";
+
+  const backgroundMusic = document.getElementById('backgroundMusic');
+
+  function playBackgroundMusic(){
+    backgroundMusic.volume = 0.35;
+    backgroundMusic.play().catch(() => {
+      const resumeMusic = () => {
+        backgroundMusic.play().catch(() => {});
+      };
+      document.addEventListener('click', resumeMusic, { once:true });
+      document.addEventListener('keydown', resumeMusic, { once:true });
+    });
+  }
+
+  playBackgroundMusic();
 
   /* ============================================================
      NAVEGACIÓN SPA ENTRE PÁGINAS
