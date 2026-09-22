@@ -1,0 +1,1 @@
+Coloca aquí tus PNG: tallo.png, petalos.png, centro.png, corazon.png (fondo transparente). Si esta carpeta queda vacía, el ramo se dibuja automáticamente con formas vectoriales de respaldo.
