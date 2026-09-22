@@ -1082,7 +1082,8 @@
   }
 
   /* --- Animación con requestAnimationFrame --------------------------- */
-  const ANIMATION_DURATION_MS = 3600;
+  const ANIMATION_DURATION_MS = 7200;
+  const RECORDING_TAIL_MS = 800;
   let animStart = null;
   let animRAF = null;
   let lastProgress = 0;
@@ -1232,12 +1233,16 @@
       recStatus.textContent = '¡Video descargado con éxito!';
     };
 
-    recorder.start();
+    // Entrega fragmentos periódicos; esto evita perder el video si el móvil
+    // tarda en procesar el canvas al finalizar la animación.
+    recorder.start(250);
 
     // Reinicia y reproduce la animación completa mientras se graba
     startBouquetAnimation(() => {
-      // Pequeño margen extra para asegurar que el último frame se capture
-      setTimeout(() => recorder.stop(), 300);
+      // Mantiene el último frame el tiempo suficiente para móviles lentos.
+      setTimeout(() => {
+        if(recorder.state !== 'inactive') recorder.stop();
+      }, RECORDING_TAIL_MS);
     });
   });
 
